@@ -10,21 +10,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 class AssignmentApplicationTests {
-	private RestTemplate restTemplate;
+    private RestTemplate restTemplate;
 
-	@BeforeEach
-	void setUp() {
-		restTemplate = new RestTemplate();
-	}
+    @BeforeEach
+    void setUp() {
+        restTemplate = new RestTemplate();
+    }
 
-	@Test
-	void testSuccess() {
-		String url = "http://localhost:8080/api/appointments-by-reason?keyword=Checkup";
+    @Test
+    void testSuccess() {
+        String url = "http://localhost:8080/api/appointments-by-reason?keyword=Checkup";
 
-		ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
 
-		String body = response.getBody();
+        String body = response.getBody();
 
-		assertTrue(body.contains("\"reason\" : \"SomeNonExistentField\""));
-	}
+        assertTrue(body.contains("\"reason\" : \"SomeNonExistentField\""));
+    }
 }
