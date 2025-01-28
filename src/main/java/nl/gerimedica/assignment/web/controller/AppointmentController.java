@@ -1,10 +1,10 @@
 package nl.gerimedica.assignment.web.controller;
 
 import lombok.RequiredArgsConstructor;
-import nl.gerimedica.assignment.model.Appointment;
 import nl.gerimedica.assignment.service.AppointmentService;
 import nl.gerimedica.assignment.util.HospitalUtils;
-import nl.gerimedica.assignment.web.model.AppointmentDto;
+import nl.gerimedica.assignment.web.model.AppointmentRequest;
+import nl.gerimedica.assignment.web.model.AppointmentResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,20 +19,16 @@ public class AppointmentController {
     private final AppointmentService appointmentService;
 
     @PostMapping("/bulk-appointments")
-    public ResponseEntity<List<Appointment>> createBulkAppointments(
-            @RequestParam String patientName,
-            @RequestParam String ssn,
-            @RequestBody List<AppointmentDto> payload
-    ) {
+    public ResponseEntity<List<AppointmentResponse>> createBulkAppointments(@RequestBody AppointmentRequest payload) {
         HospitalUtils.recordUsage("Controller triggered bulk appointments creation");
 
-        List<Appointment> created = appointmentService.bulkCreateAppointments(patientName, ssn, payload);
-        return new ResponseEntity<>(created, HttpStatus.OK);
+        List<AppointmentResponse> created = appointmentService.bulkCreateAppointments(payload);
+        return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
     @GetMapping("/appointments-by-reason")
-    public ResponseEntity<List<Appointment>> getAppointmentsByReason(@RequestParam String keyword) {
-        List<Appointment> found = appointmentService.getAppointmentsByReason(keyword);
+    public ResponseEntity<List<AppointmentResponse>> getAppointmentsByReason(@RequestParam String keyword) {
+        List<AppointmentResponse> found = appointmentService.getAppointmentsByReason(keyword);
         return new ResponseEntity<>(found, HttpStatus.OK);
     }
 
@@ -43,8 +39,8 @@ public class AppointmentController {
     }
 
     @GetMapping("/appointments/latest")
-    public ResponseEntity<Appointment> getLatestAppointment(@RequestParam String ssn) {
-        Appointment latest = appointmentService.findLatestAppointmentBySSN(ssn);
+    public ResponseEntity<AppointmentResponse> getLatestAppointment(@RequestParam String ssn) {
+        AppointmentResponse latest = appointmentService.findLatestAppointmentBySSN(ssn);
         return new ResponseEntity<>(latest, HttpStatus.OK);
     }
 }

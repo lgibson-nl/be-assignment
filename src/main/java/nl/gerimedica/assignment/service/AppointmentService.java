@@ -7,6 +7,8 @@ import nl.gerimedica.assignment.model.Appointment;
 import nl.gerimedica.assignment.model.Patient;
 import nl.gerimedica.assignment.util.HospitalUtils;
 import nl.gerimedica.assignment.web.model.AppointmentDto;
+import nl.gerimedica.assignment.web.model.AppointmentRequest;
+import nl.gerimedica.assignment.web.model.AppointmentResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,24 +26,21 @@ public class AppointmentService {
     private final AppointmentRepository appointmentRepo;
 
     @Transactional
-    public List<Appointment> bulkCreateAppointments(
-            String patientName,
-            String ssn,
-            List<AppointmentDto> appointmentRequests
-    ) {
+    public List<AppointmentResponse> bulkCreateAppointments(AppointmentRequest request) {
+        final String ssn = request.ssn();
         Patient patient = patientService.findPatientBySSN(ssn);
 
         if (patient == null) {
             log.info("No patient found with SSN: {}", ssn);
-            patient = patientService.createPatient(patientName, ssn);
+            patient = patientService.createPatient(request.patientName(), ssn);
         } else {
-            log.info("Existing patient found, SSN: {}", patient.getSsn());
+            log.info("Existing patient found, SSN: {}", ssn);
         }
 
         final List<Appointment> createdAppointments = new ArrayList<>();
 
-        for (AppointmentDto request : appointmentRequests) {
-            createdAppointments.add(new Appointment(request.reason(), request.date(), patient));
+        for (AppointmentDto requestedAppointment : request.appointments()) {
+            createdAppointments.add(new Appointment(requestedAppointment.reason(), requestedAppointment.date(), patient));
         }
 
         appointmentRepo.saveAll(createdAppointments);
@@ -49,12 +48,21 @@ public class AppointmentService {
 
         HospitalUtils.recordUsage("Bulk create appointments");
 
-        return createdAppointments;
+        return toResponseList(createdAppointments);
     }
 
-    public List<Appointment> getAppointmentsByReason(String reasonKeyword) {
+    public List<AppointmentResponse> getAppointmentsByReason(String reasonKeyword) {
         HospitalUtils.recordUsage("Get appointments by reason");
-        return appointmentRepo.findByReasonContainingIgnoreCase(reasonKeyword);
+        log.debug("Searching appointments by reason: {}", reasonKeyword);
+
+        List<Appointment> appointments = appointmentRepo.findByReasonContainingIgnoreCase(reasonKeyword);
+        log.info("Found {} appointments by reason: {}", appointments.size(), reasonKeyword);
+
+        return toResponseList(appointments);
+    }
+
+    private List<AppointmentResponse> toResponseList(List<Appointment> appointments) {
+        return appointments.stream().map(AppointmentResponse::from).toList();
     }
 
     @Transactional
@@ -63,13 +71,14 @@ public class AppointmentService {
         log.info("Deleted {} appointments for patient with SSN: {}", deletedRecords, ssn);
     }
 
-    public Appointment findLatestAppointmentBySSN(String ssn) {
+    public AppointmentResponse findLatestAppointmentBySSN(String ssn) {
         List<Appointment> appointments = appointmentRepo.findByPatient_Ssn(ssn);
 
         if (appointments.isEmpty()) {
             return null;
         } else {
-            return appointments.stream().max(Comparator.comparing(Appointment::getDate)).get();
+            Appointment latestAppointment = appointments.stream().max(Comparator.comparing(Appointment::getDate)).get();
+            return AppointmentResponse.from(latestAppointment);
         }
     }
 }
