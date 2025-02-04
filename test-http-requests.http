@@ -1,0 +1,37 @@
+# Create bulk appointments
+POST /api/bulk-appointments HTTP/1.1
+Host: localhost:8080
+Content-Type: application/json
+
+{
+  "patientName": "John Doe",
+  "ssn": "123456789",
+  "appointments": [
+    {
+      "date": "2025-02-01T10:00:00",
+      "reason": "Checkup"
+    },
+    {
+      "date": "2025-02-02T11:00:00",
+      "reason": "Follow-up"
+    }
+  ]
+}
+
+###
+# Get appointments by reason
+GET /api/appointments-by-reason?keyword=Checkup HTTP/1.1
+Host: localhost:8080
+Content-Type: application/json
+
+###
+# Get latest appointment by ssn
+GET /api/appointments/latest?ssn=123456789 HTTP/1.1
+Host: localhost:8080
+Content-Type: application/json
+
+###
+# Delete appointments by ssn
+DELETE /api/delete-appointments?ssn=123456789 HTTP/1.1
+Host: localhost:8080
+Content-Type: application/json
